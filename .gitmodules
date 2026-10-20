@@ -10,3 +10,6 @@
 [submodule "mods/cosmetics"]
 	path = mods/cosmetics
 	url = https://github.com/TwilitRealm/dusklight-cosmetics
+[submodule "mods/Dawnlight/mods/dawnlight"]
+	path = mods/Dawnlight/mods/dawnlight
+	url = https://github.com/BeZide93/dawnlight
