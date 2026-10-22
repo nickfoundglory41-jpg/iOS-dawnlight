@@ -15,5 +15,4 @@
 	url = https://github.com/BeZide93/dawnlight
 [submodule "mods/dawnlight"]
     path = mods/dawnlight
-    url = https://github.com
-	
+    url = https://github.com/BeZide93/dawnlight
