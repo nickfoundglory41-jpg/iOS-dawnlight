@@ -16,3 +16,6 @@
 [submodule "mods/dawnlight"]
     path = mods/dawnlight
     url = https://github.com/BeZide93/dawnlight
+[submodule "mods/twilit_essentials"]
+    path = mods/twilit_essentials
+    url = https://github.com/F1mmel/dusklight-twilit-essentials/releases
