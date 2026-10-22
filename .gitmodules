@@ -13,3 +13,7 @@
 [submodule "mods/Dawnlight/mods/dawnlight"]
 	path = mods/Dawnlight/mods/dawnlight
 	url = https://github.com/BeZide93/dawnlight
+[submodule "mods/dawnlight"]
+    path = mods/dawnlight
+    url = https://github.com
+	
