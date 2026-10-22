@@ -84,7 +84,7 @@ jobs:
 
   build-apple:
     name: Build Apple (${{matrix.name}})
-    runs-on: macos-15
+    runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
@@ -142,10 +142,10 @@ jobs:
         uses: mozilla-actions/sccache-action@v0.0.10
 
       - name: Configure CMake
-        run: cmake --preset ${{matrix.preset}}
+        run: cmake -B build -G Xcode -DCMAKE_SYSTEM_NAME=iOS -DDUSK_BUILD_MODS=ON -DSTATIC_LINK_MODS=ON
 
       - name: Build
-        run: cmake --build --preset ${{matrix.preset}}
+        run: cmake -B build -G Xcode -DCMAKE_SYSTEM_NAME=iOS -DDUSK_BUILD_MODS=ON -DSTATIC_LINK_MODS=ON
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
