@@ -179,8 +179,7 @@ build-apple:
             build/install/*.app
             build/install/debug.tar.*
             build/install/sdk/
-
-
+            
   build-android:
     name: Build Android (${{matrix.name}})
     runs-on: ubuntu-latest
