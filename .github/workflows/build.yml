@@ -1,4 +1,4 @@
-mname: Build
+name: Build
 
 on:
   push:
@@ -34,14 +34,11 @@ jobs:
             runner: ubuntu-24.04
             preset: gcc
             artifact_arch: x86_64
+
           - name: GCC aarch64
             runner: ubuntu-24.04-arm
             preset: gcc
             artifact_arch: aarch64
-          # - name: Clang x86_64
-          #   runner: ubuntu-latest
-          #   preset: clang
-          #   artifact_arch: x86_64
 
     steps:
       - uses: actions/checkout@v6
@@ -74,7 +71,7 @@ jobs:
         run: ci/build-appimage.sh
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: dusklight-${{env.APP_VERSION}}-linux-${{matrix.preset}}-${{matrix.artifact_arch}}
           path: |
@@ -82,9 +79,10 @@ jobs:
             build/install/debug.tar.*
             build/install/sdk/
 
-build-apple:
+  build-apple:
     name: Build Apple (${{matrix.name}})
     runs-on: macos-latest
+
     strategy:
       fail-fast: false
       matrix:
@@ -93,10 +91,12 @@ build-apple:
             platform: macos
             preset: x-macos-ci-arm64
             artifact_name: macos-appleclang-arm64
+
           - name: AppleClang macOS x86_64
             platform: macos
             preset: x-macos-ci-x86_64
             artifact_name: macos-appleclang-x86_64
+
           - name: AppleClang iOS arm64
             platform: ios
             preset: x-ios-ci
@@ -108,7 +108,7 @@ build-apple:
           fetch-depth: 0
           submodules: recursive
 
-      - name: "Use the Command Line Tools toolchain"
+      - name: Use Command Line Tools
         if: matrix.platform == 'macos'
         run: sudo xcode-select -s /Library/Developer/CommandLineTools
 
@@ -121,12 +121,6 @@ build-apple:
           rustup toolchain install stable
           rustup target add aarch64-apple-ios
 
-      - name: Install Rust tvOS target
-        if: matrix.platform == 'tvos'
-        run: |
-          rustup toolchain install nightly
-          rustup target add --toolchain nightly aarch64-apple-tvos
-
       - name: Install Rust x86_64 macOS target
         if: endsWith(matrix.preset, 'x86_64')
         run: |
@@ -138,9 +132,7 @@ build-apple:
 
       - name: Configure CMake
         run: |
-          cmake --preset ${{ matrix.preset }} \
-            -DDUSK_BUILD_MODS=ON \
-            -DSTATIC_LINK_MODS=ON
+          cmake --preset ${{ matrix.preset }}
 
       - name: Build
         run: |
@@ -149,7 +141,7 @@ build-apple:
       - name: Create Unsigned IPA
         if: matrix.platform == 'ios'
         run: |
-          APP=$(find build/install -name "*.app" -type d | head -n 1)
+          APP=$(find build -name "*.app" -type d | head -n 1)
 
           if [ -z "$APP" ]; then
             echo "No .app bundle found"
@@ -157,7 +149,9 @@ build-apple:
             exit 1
           fi
 
-          mkdir -p Payload
+          rm -rf Payload
+          mkdir Payload
+
           cp -R "$APP" Payload/
 
           zip -qry Dusklight-unsigned.ipa Payload
@@ -167,8 +161,7 @@ build-apple:
         uses: actions/upload-artifact@v4
         with:
           name: dusklight-ios-unsigned
-          path: |
-            Dusklight-unsigned.ipa
+          path: Dusklight-unsigned.ipa
 
       - name: Upload macOS Artifacts
         if: matrix.platform == 'macos'
@@ -179,7 +172,7 @@ build-apple:
             build/install/*.app
             build/install/debug.tar.*
             build/install/sdk/
-            
+
   build-android:
     name: Build Android (${{matrix.name}})
     runs-on: ubuntu-latest
@@ -250,75 +243,7 @@ build-apple:
           cp platforms/android/app/build/outputs/apk/release/app-${{matrix.abi}}-release-unsigned.apk upload/
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: dusklight-${{env.APP_VERSION}}-android-${{matrix.artifact_arch}}
           path: upload/
-
-  build-windows:
-    name: Build Windows (${{matrix.name}})
-    runs-on: ${{matrix.runner}}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: MSVC x86_64
-            runner: windows-latest
-            preset: msvc
-            msvc_arch: amd64
-            vcpkg_arch: x64
-            artifact_arch: x86_64
-          - name: MSVC arm64
-            runner: windows-latest
-            preset: arm64-msvc
-            msvc_arch: amd64_arm64
-            vcpkg_arch: arm64
-            artifact_arch: arm64
-          # - name: Clang x86_64
-          #   runner: windows-latest
-          #   preset: clang
-          #   msvc_arch: amd64
-          #   vcpkg_arch: x64
-          #   artifact_arch: x86_64
-
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          submodules: recursive
-
-      - name: Enable Visual Studio environment
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: ${{matrix.msvc_arch}}
-
-      # msvc-dev-cmd sets VCPKG_ROOT, set it back
-      - name: Override VCPKG_ROOT
-        run: echo "VCPKG_ROOT=C:\vcpkg" >> $env:GITHUB_ENV
-
-      - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.9
-
-      - name: Install dependencies
-        run: |
-          choco install ninja
-          vcpkg install freetype:${{matrix.vcpkg_arch}}-windows zstd:${{matrix.vcpkg_arch}}-windows
-
-      - name: Configure CMake
-        run: cmake --preset x-windows-ci-${{matrix.preset}}
-
-      - name: Build
-        run: cmake --build --preset x-windows-ci-${{matrix.preset}}
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: dusklight-${{env.APP_VERSION}}-win32-msvc-${{matrix.artifact_arch}}
-          path: |
-            build/install/*.exe
-            build/install/*.dll
-            build/install/res/
-            build/install/mods/
-            build/install/debug.7z
-            build/install/sdk/
